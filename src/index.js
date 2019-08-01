@@ -8,6 +8,7 @@ const cors = require('cors')
 const User = require('./models/user')
 const Task = require('./models/task')
 
+//'mongodb+srv://dennyangesti:kaskuser21@cluster0-y4vtd.mongodb.net/dennydb?retryWrites=true&w=majority'
 mongoose.connect('mongodb+srv://dennyangesti:kaskuser21@cluster0-y4vtd.mongodb.net/dennydb?retryWrites=true&w=majority', {
    // Parser string URL
    useNewUrlParser: true,
@@ -154,14 +155,20 @@ app.get('/users/:id/avatar', async (req, res) => {
 // UPDATE PROFILE BY ID
 // Name, email, age, password
 app.patch('/users/:id', upload.single('ravatar'), (req, res) => {
-   var { name, email, age, password } = req.body
+   let arrBody = Object.keys(req.body)
+   // req.body {name, email, age, password}
+   // arrBody [name, email, age, password]
+   arrBody.forEach(key => {
+      if (!req.body[key]) {
+         delete req.body[key]
+      }
+   })
+   // req.body {name, email, age}
+   // arrBody [name, email, age]
+   arrBody = Object.keys(req.body)
+
 
    const data_id = req.params.id
-   const data_name = name
-   const data_email = email
-   const data_age = age
-   const data_password = password
-
 
 
    User.findById(data_id)
@@ -172,10 +179,11 @@ app.patch('/users/:id', upload.single('ravatar'), (req, res) => {
             return res.send("User tidak di temukan")
          }
 
-         user.name = data_name
-         user.email = data_email
-         user.password = data_password
-         user.age = data_age
+         // Update user
+         // arrBody [name, email, age]
+         arrBody.forEach(key => {
+            user[key] = req.body[key]
+         })
 
          sharp(req.file.buffer).resize({ width: 250 }).png().toBuffer()
             .then(buffer => {
